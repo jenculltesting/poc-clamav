@@ -1,0 +1,27 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  # This creates a new pipeline run named 'test-clamav-update'
+  # in your development namespace.
+  generateName: test-clamav-update-
+spec:
+  pipelineSpec:
+    tasks:
+      - name: create-clamav-db-artifact
+        taskRef:
+          # This refers to the generic task you created
+          name: update-db-as-trusted-data
+        params:
+          - name: ociStorage
+            value: "quay.io/redhat-user-workloads/rh-ee-jcullina-tenant/poc-clamav-b8172"
+          # This is where you use your new image's pull spec
+          - name: runtimeImage 
+            value: "quay.io/redhat-user-workloads/rh-ee-jcullina-tenant/poc-clamav-b8172:latest"
+          # This is the script that will run inside your image
+          - name: executionScript
+            value: |
+              #!/bin/sh
+              set -ex
+              DB_PATH="/var/workdir/source/clamav-db"
+              mkdir -p "$DB_PATH"
+              freshclam --datadir="$DB_PATH"
