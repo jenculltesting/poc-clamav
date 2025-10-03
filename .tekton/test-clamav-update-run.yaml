@@ -1,23 +1,59 @@
 apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
-  # This creates a new pipeline run named 'test-clamav-update'
-  # in your development namespace.
   generateName: test-clamav-update-
 spec:
   pipelineSpec:
     tasks:
       - name: create-clamav-db-artifact
-        taskRef:
-          # This refers to the generic task you created
-          name: update-db-as-trusted-data
+        # Instead of taskRef, we use taskSpec to embed the task definition
+        taskSpec:
+          description: Downloads a database using a custom image and script, then uploads the result as a trusted artifact.
+          params:
+            - name: ociStorage
+              type: string
+            - name: runtimeImage
+              type: string
+            - name: executionScript
+              type: string
+          results:
+            - name: DB_ARTIFACT
+              type: string
+          volumes:
+            - name: workdir
+              emptyDir: {}
+          stepTemplate:
+            volumeMounts:
+              - mountPath: /var/workdir
+                name: workdir
+          steps:
+            - name: update-db-data
+              image: $(params.runtimeImage)
+              workingDir: /var/workdir
+              script: $(params.executionScript)
+              computeResources:
+                requests:
+                  memory: 2Gi
+                limits:
+                  memory: 4Gi
+            - name: create-trusted-artifact
+              image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:9b180776a41d9a22a1c51539f1647c60defbbd55b44bbebdd4130e33512d8b0d
+              args:
+                - create
+                - --store
+                - $(params.ociStorage)
+                - $(results.DB_ARTIFACT.path)=/var/workdir/source
+              computeResources:
+                requests:
+                  memory: 2Gi
+                limits:
+                  memory: 2Gi
+        # These params are passed to the embedded taskSpec
         params:
           - name: ociStorage
             value: "quay.io/redhat-user-workloads/rh-ee-jcullina-tenant/poc-clamav-b8172"
-          # This is where you use your new image's pull spec
           - name: runtimeImage 
             value: "quay.io/redhat-user-workloads/rh-ee-jcullina-tenant/poc-clamav-b8172:latest"
-          # This is the script that will run inside your image
           - name: executionScript
             value: |
               #!/bin/sh
