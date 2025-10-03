@@ -51,9 +51,9 @@ spec:
         # These params are passed to the embedded taskSpec
         params:
           - name: ociStorage
-            value: "quay.io/redhat-user-workloads/rh-ee-jcullina-tenant/poc-clamav-b8172"
+            value: "quay.io/redhat-user-workloads/rhtap-integration-tenant/poc-clamav-e111e"
           - name: runtimeImage 
-            value: "quay.io/redhat-user-workloads/rh-ee-jcullina-tenant/poc-clamav-b8172:latest"
+            value: "quay.io/redhat-user-workloads/rhtap-integration-tenant/poc-clamav-e111e:latest"
           - name: executionScript
             value: |
               #!/bin/sh
