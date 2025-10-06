@@ -6,7 +6,7 @@ spec:
   pipelineSpec:
     tasks:
       - name: create-clamav-db-artifact
-        # Instead of taskRef, we use taskSpec to embed the task definition
+        # The entire Task definition is embedded here using taskSpec
         taskSpec:
           description: Downloads a database using a custom image and script, then uploads the result as a trusted artifact.
           params:
@@ -48,16 +48,18 @@ spec:
                   memory: 2Gi
                 limits:
                   memory: 2Gi
-        # These params are passed to the embedded taskSpec
         params:
           - name: ociStorage
             value: "quay.io/redhat-user-workloads/rh-ee-jcullina-tenant/poc-clamav-d26f3"
           - name: runtimeImage 
-            value: "quay.io/redhat-user-workloads/rh-ee-jcullina-tenant/poc-clamav-d26f3:latest"
+            value: "quay.io/redhat-user-workloads/rh-ee-jcullina-tenant/poc-clamav-d26f3:feca0653bdaa43b533d8bf0493d02dcb37921c03"
           - name: executionScript
             value: |
               #!/bin/sh
               set -ex
               DB_PATH="/var/workdir/source/clamav-db"
               mkdir -p "$DB_PATH"
+              chmod -R 777 "$DB_PATH"
               freshclam --datadir="$DB_PATH"
+  taskRunTemplate:
+    serviceAccountName: konflux-integration-runner
