@@ -6,7 +6,6 @@ spec:
   pipelineSpec:
     tasks:
       - name: create-clamav-db-artifact
-        # The entire Task definition is embedded here using taskSpec
         taskSpec:
           description: Downloads a database using a custom image and script, then uploads the result as a trusted artifact.
           params:
