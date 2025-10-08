@@ -60,5 +60,22 @@ spec:
               mkdir -p "$DB_PATH"
               chmod -R 777 "$DB_PATH"
               freshclam --datadir="$DB_PATH"
+      - name: tag-latest-db
+        runAfter:
+          - create-clamav-db-artifact
+        taskRef:
+          params:
+            - name: name
+              value: apply-tags
+            - name: bundle
+              value: quay.io/konflux-ci/tekton-catalog/task-apply-tags:0.2@sha256:f44be1bf0262471f2f503f5e19da5f0628dcaf968c86272a2ad6b4871e708448
+            - name: kind
+              value: task
+          resolver: bundles
+        params:
+          - name: IMAGE_URL
+            value: $(tasks.create-clamav-db-artifact.results.DB_ARTIFACT)
+          - name: ADDITIONAL_TAGS
+            value: "latest"      
   taskRunTemplate:
     serviceAccountName: konflux-integration-runner
