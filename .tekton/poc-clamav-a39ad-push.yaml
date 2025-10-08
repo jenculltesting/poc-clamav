@@ -113,6 +113,10 @@ spec:
     - description: ""
       name: CHAINS-GIT_COMMIT
       value: $(tasks.clone-repository.results.commit)
+    # shared workspace added in
+    workspaces:
+    - name: shared-workspace
+      description: A shared directory for tasks to read and write files.
     tasks:
     - name: init
       params:
@@ -160,6 +164,7 @@ spec:
       workspaces:
       - name: basic-auth
         workspace: git-auth
+    # new task to use db built in integration test
     - name: merge-db-artifact
       runAfter:
       - clone-repository
@@ -190,13 +195,15 @@ spec:
           value: "oci:quay.io/redhat-user-workloads/rh-ee-jcullina-tenant/poc-clamav-poc-clamav-a39ad:latest"
         - name: ociStorage
           value: $(params.output-image).merged
+      # shared workspace added in
       workspaces:
         - name: workdir
-          emptyDir: {}
+          workspace: shared-workspace
     - name: prefetch-dependencies
       params:
       - name: input
         value: $(params.prefetch-input)
+      # change to use new artifact created in integration test
       - name: SOURCE_ARTIFACT
         value: $(tasks.merge-db-artifact.results.MERGED_ARTIFACT)
       - name: ociStorage
@@ -619,15 +626,20 @@ spec:
         operator: in
         values:
         - "false"
-    workspaces:
-    - name: git-auth
-      optional: true
-    - name: netrc
-      optional: true
   taskRunTemplate:
     serviceAccountName: build-pipeline-poc-clamav-a39ad
   workspaces:
   - name: git-auth
     secret:
       secretName: '{{ git_auth_secret }}'
+  - name: netrc
+    optional: true
+  - name: shared-workspace
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 2Gi
 status: {}
