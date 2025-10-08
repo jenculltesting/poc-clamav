@@ -69,8 +69,8 @@ COPY --from=konflux-test /utils.sh /utils.sh
 
 COPY --from=konflux-test /usr/local/bin/ec /usr/local/bin/ec
 
-# Copy the pre-fetched db from the trusted artifact
-COPY clamav-db /var/lib/clamav
+# Update ClamAV virus definitions
+RUN freshclam
 
 COPY /whitelist.ign2 /var/lib/clamav/whitelist.ign2
 
