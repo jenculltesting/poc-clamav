@@ -160,18 +160,51 @@ spec:
       workspaces:
       - name: basic-auth
         workspace: git-auth
+    - name: merge-db-artifact
+      runAfter:
+      - clone-repository
+      taskSpec:
+        params:
+          - name: SOURCE_ARTIFACT
+          - name: DB_ARTIFACT
+          - name: ociStorage
+        results:
+          - name: MERGED_ARTIFACT
+        workspaces:
+          - name: workdir
+        steps:
+          - name: merge
+            image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:9b180776a41d9a22a1c51539f1647c60defbbd55b44bbebdd4130e33512d8b0d
+            workingDir: $(workspaces.workdir.path)
+            script: |
+              # Unpack the source code artifact into ./source
+              build-trusted-artifacts use $(params.SOURCE_ARTIFACT)=source
+              # Unpack the DB artifact into a subdirectory ./source/clamav-db
+              build-trusted-artifacts use $(params.DB_ARTIFACT)=source/clamav-db
+              # Create a new, merged artifact from the combined ./source directory
+              build-trusted-artifacts create --store $(params.ociStorage) $(results.MERGED_ARTIFACT.path)=source
+      params:
+        - name: SOURCE_ARTIFACT
+          value: $(tasks.clone-repository.results.SOURCE_ARTIFACT)
+        - name: DB_ARTIFACT
+          value: "oci:quay.io/redhat-user-workloads/rh-ee-jcullina-tenant/poc-clamav-poc-clamav-a39ad:latest"
+        - name: ociStorage
+          value: $(params.output-image).merged
+      workspaces:
+        - name: workdir
+          emptyDir: {}
     - name: prefetch-dependencies
       params:
       - name: input
         value: $(params.prefetch-input)
       - name: SOURCE_ARTIFACT
-        value: $(tasks.clone-repository.results.SOURCE_ARTIFACT)
+        value: $(tasks.tasks.merge-db-artifact.results.MERGED_ARTIFACT)
       - name: ociStorage
         value: $(params.output-image).prefetch
       - name: ociArtifactExpiresAfter
         value: $(params.image-expires-after)
       runAfter:
-      - clone-repository
+      - merge-db-artifact
       taskRef:
         params:
         - name: name

@@ -69,8 +69,8 @@ COPY --from=konflux-test /utils.sh /utils.sh
 
 COPY --from=konflux-test /usr/local/bin/ec /usr/local/bin/ec
 
-# Update ClamAV virus definitions
-RUN freshclam
+# use the separately built db in the app
+COPY clamav-db /var/lib/clamav
 
 COPY /whitelist.ign2 /var/lib/clamav/whitelist.ign2
 
