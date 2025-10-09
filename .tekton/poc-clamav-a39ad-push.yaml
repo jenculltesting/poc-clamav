@@ -183,11 +183,11 @@ spec:
             workingDir: $(workspaces.workdir.path)
             script: |
               # Unpack the source code artifact into ./source
-              build-trusted-artifacts use $(params.SOURCE_ARTIFACT)=source
+              /usr/bin/build-trusted-artifacts use $(params.SOURCE_ARTIFACT)=source
               # Unpack the DB artifact into a subdirectory ./source/clamav-db
-              build-trusted-artifacts use $(params.DB_ARTIFACT)=source/clamav-db
+              /usr/bin/build-trusted-artifacts use $(params.DB_ARTIFACT)=source/clamav-db
               # Create a new, merged artifact from the combined ./source directory
-              build-trusted-artifacts create --store $(params.ociStorage) $(results.MERGED_ARTIFACT.path)=source
+              /usr/bin/build-trusted-artifacts create --store $(params.ociStorage) $(results.MERGED_ARTIFACT.path)=source
       params:
         - name: SOURCE_ARTIFACT
           value: $(tasks.clone-repository.results.SOURCE_ARTIFACT)
