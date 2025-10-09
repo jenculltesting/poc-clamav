@@ -62,3 +62,5 @@ spec:
               freshclam --datadir="$DB_PATH"     
   taskRunTemplate:
     serviceAccountName: konflux-integration-runner
+
+#8 Oct, working
