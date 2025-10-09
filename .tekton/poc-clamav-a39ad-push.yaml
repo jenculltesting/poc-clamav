@@ -632,8 +632,6 @@ spec:
   - name: git-auth
     secret:
       secretName: '{{ git_auth_secret }}'
-  - name: netrc
-    optional: true
   - name: shared-workspace
     volumeClaimTemplate:
       spec:
