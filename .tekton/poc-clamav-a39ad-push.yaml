@@ -182,12 +182,9 @@ spec:
             image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:9b180776a41d9a22a1c51539f1647c60defbbd55b44bbebdd4130e33512d8b0d
             workingDir: $(workspaces.workdir.path)
             script: |
-              # Unpack the source code artifact into ./source
-              /usr/bin/build-trusted-artifacts use $(params.SOURCE_ARTIFACT)=source
-              # Unpack the DB artifact into a subdirectory ./source/clamav-db
-              /usr/bin/build-trusted-artifacts use $(params.DB_ARTIFACT)=source/clamav-db
-              # Create a new, merged artifact from the combined ./source directory
-              /usr/bin/build-trusted-artifacts create --store $(params.ociStorage) $(results.MERGED_ARTIFACT.path)=source
+              /usr/local/bin/entrypoint use $(params.SOURCE_ARTIFACT)=source
+              /usr/local/bin/entrypoint use $(params.DB_ARTIFACT)=source/clamav-db
+              /usr/local/bin/entrypoint create --store $(params.ociStorage) $(results.MERGED_ARTIFACT.path)=source
       params:
         - name: SOURCE_ARTIFACT
           value: $(tasks.clone-repository.results.SOURCE_ARTIFACT)
