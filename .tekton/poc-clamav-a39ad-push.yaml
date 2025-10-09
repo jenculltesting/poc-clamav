@@ -189,7 +189,7 @@ spec:
         - name: SOURCE_ARTIFACT
           value: $(tasks.clone-repository.results.SOURCE_ARTIFACT)
         - name: DB_ARTIFACT
-          value: "quay.io/rh-ee-jcullina/poc-clamav-db-artifact:latest"
+          value: "quay.io/redhat-user-workloads/rh-ee-jcullina-tenant/poc-clamav-a39ad:latest"
         - name: ociStorage
           value: $(params.output-image).merged
       # shared workspace added in
