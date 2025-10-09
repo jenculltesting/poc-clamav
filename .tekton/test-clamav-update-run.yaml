@@ -49,7 +49,7 @@ spec:
                   memory: 2Gi
         params:
           - name: ociStorage
-            value: "quay.io/redhat-user-workloads/rh-ee-jcullina-tenant/poc-clamav-a39ad:latest"
+            value: "quay.io/rh-ee-jcullina/poc-clamav-db-artifact:latest"
           - name: runtimeImage 
             value: "quay.io/redhat-user-workloads/rh-ee-jcullina-tenant/poc-clamav-a39ad:3eeaf8a99fa66182f3ee14ce2345e9af4bf0ce01"
           - name: executionScript
