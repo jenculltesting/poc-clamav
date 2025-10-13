@@ -1,5 +1,5 @@
-FROM quay.io/konflux-ci/konflux-test:v1.4.39@sha256:89cdc9d251e15d07018548137b4034669df8e9e2b171a188c8b8201d3638cb17 as konflux-test
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.6-1754000177
+FROM quay.io/konflux-ci/konflux-test:v1.4.38@sha256:c306aa4b764fcade1cbea8b8f7b6166e3a1289f56e03be99f669b9aaf7a92363 as konflux-test
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.6-1758184547
 
 
 ENV POLICY_PATH="/project"
@@ -69,8 +69,8 @@ COPY --from=konflux-test /utils.sh /utils.sh
 
 COPY --from=konflux-test /usr/local/bin/ec /usr/local/bin/ec
 
-# Update ClamAV virus definitions
-RUN freshclam
+# use the separately built db in the app
+COPY clamav-db /var/lib/clamav
 
 COPY /whitelist.ign2 /var/lib/clamav/whitelist.ign2
 
