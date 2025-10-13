@@ -1,11 +1,9 @@
-FROM quay.io/konflux-ci/konflux-test:v1.4.38@sha256:c306aa4b764fcade1cbea8b8f7b6166e3a1289f56e03be99f669b9aaf7a92363 as konflux-test
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.6-1758184547
+# Stage 1: "Builder" - internet access work
+FROM registry.access.redhat.com/ubi9/ubi:latest as builder
 
-
-ENV POLICY_PATH="/project"
-# Install required packages
-RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
-    microdnf -y --setopt=tsflags=nodocs install \
+# 1. Install required packages
+RUN dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
+    dnf -y --setopt=tsflags=nodocs install \
     clamav \
     clamd \
     clamav-server \
@@ -14,12 +12,31 @@ RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.
     tar \
     skopeo \
     findutils \
-    && microdnf clean all
+    && dnf clean all
 
-# Add clamav user and group
+# 2. Download the oc client binary.
+RUN ARCH="$(uname -m)" && \
+    curl -fsSL https://mirror.openshift.com/pub/openshift-v4/"$ARCH"/clients/ocp/stable/openshift-client-linux.tar.gz --output oc.tar.gz && \
+    tar -xzvf oc.tar.gz -C /usr/bin && \
+    rm oc.tar.gz
+
+# =========================================================================
+# Stage 2: "Final Image" - This is secure section for hermetic builds
+# =========================================================================
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.6-1754000177
+
+COPY --from=builder /etc/clamd.d/scan.conf /etc/clamd.d/scan.conf
+COPY --from=builder /usr/sbin/clamd /usr/sbin/
+COPY --from=builder /usr/bin/clamscan /usr/bin/
+COPY --from=builder /usr/bin/freshclam /usr/bin/
+COPY --from=builder /usr/bin/jq /usr/bin/
+COPY --from=builder /usr/bin/skopeo /usr/bin/
+COPY --from=builder /usr/bin/oc /usr/bin/
+
+# Add clamav user and group.
 RUN groupadd -r clamav && useradd -r -g clamav clamav
 
-# Create necessary directories
+# Create necessary directories.
 RUN mkdir -p /var/run/clamd.scan /var/log/clamav && \
     chmod -R 0777 /var/run/clamd.scan /var/log/clamav
 
@@ -57,31 +74,12 @@ RUN sed -i 's|^#LogFile .*|LogFile /var/log/clamav/clamd.log|' /etc/clamd.d/scan
     sed -i 's|^#Bytecode .*|Bytecode yes|' /etc/clamd.d/scan.conf && \
     sed -i 's|^#BytecodeSecurity .*|BytecodeSecurity TrustSigned|' /etc/clamd.d/scan.conf
 
-COPY /start-clamd.sh /start-clamd.sh
-
-
-# Copies your code file from your action repository to the filesystem path `/` of the container
-COPY test/selftest.sh /selftest.sh
-
-# Use utils.sh by copying it from the image
-COPY --from=konflux-test /utils.sh /utils.sh
-
-
-COPY --from=konflux-test /usr/local/bin/ec /usr/local/bin/ec
-
-# use the separately built db in the app
+# This is where pipeline will use the database artifact.
 COPY clamav-db /var/lib/clamav
 
+# Copy local application scripts and files.
+COPY /start-clamd.sh /start-clamd.sh
 COPY /whitelist.ign2 /var/lib/clamav/whitelist.ign2
 
-COPY --from=konflux-test project $POLICY_PATH
-
-
-# Download and install oc
-RUN ARCH="$(uname -m)" && \
-    curl -fsSL https://mirror.openshift.com/pub/openshift-v4/"$ARCH"/clients/ocp/stable/openshift-client-linux.tar.gz --output oc.tar.gz && \
-    cp oc.tar.gz /usr/bin/oc && \
-    tar -xzvf oc.tar.gz -C /usr/bin && \
-    rm oc.tar.gz
-
+# Set the entrypoint for the final container.
 ENTRYPOINT ["/start-clamd.sh"]
